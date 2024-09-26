@@ -1,0 +1,33 @@
+.hero_img {
+    background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url(../images/hero.jpg);
+    align-items: center;
+    display: flex;
+    background-position: top;
+    background-size: cover;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.signIn {
+    background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.2)), url(../images/signin.jpg);
+    min-height: 100vh;
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+
+}
+.signUp {
+    background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url(../images/signin.jpg);
+    min-height: 100vh;
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+    position: relative;
+}
+.AddMovie{
+    background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url(../images/signin.jpg);
+    min-height: 60vh;
+    width: 100%;
+    background-size: cover;
+    background-position: center;
+}
