@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
 import custom_axios from "../connection/axios";
 import axios, { AxiosError } from "axios";
+import { useState, useEffect } from "react";
+
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { jwtDecode } from "jwt-decode";
@@ -9,6 +10,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "../../Redux/Store";
 import { fetchMoviesFailure, fetchMoviesStart, fetchMoviesSuccess } from "../../Redux/reducers/MovieSlice";
 
+//web sockets
+import { io } from "socket.io-client";
 interface ErrorResponse {
   message: string;
 }
@@ -25,8 +28,45 @@ interface Movie {
 const AllMovies: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const {movies,loading,error}=useSelector((state:RootState)=>state.movies)
+  const { movies, loading, error } = useSelector((state: RootState) => state.movies)
   const [getmovies, setGetmovies] = useState<Movie[]>([]);
+  //pagination functionality
+  const [currentPage, setCurrentPage] = useState(1);
+  const moviesPerPage = 10;
+
+  //web sockets
+  useEffect(() => {
+    const socket = io('http://localhost:4000');
+    socket.on('connect', () => {
+      console.log('Connected to WebSocket========');
+    });
+
+    socket.on('movieCreated', (newMovie) => {
+      console.log('New movie created==============', newMovie);
+      setGetmovies([...getmovies, newMovie])
+    })
+
+    socket.on('movieUpdated', (updatedMovie) => {
+      console.log('Movie updated=============', updatedMovie);
+      setGetmovies(prevMovies => {
+        if(prevMovies && prevMovies.length){
+          return prevMovies.map(movie =>
+            movie.id === updatedMovie.id ? { ...movie, ...updatedMovie } : movie
+          )
+        }
+        return prevMovies || [];
+        }
+       );
+    });
+    socket.on('movieDeleted', (deletedMovieId) => {
+      console.log('Movie deleted===============', deletedMovieId);
+      setGetmovies(preMovies => preMovies.filter(movie => movie.id !== deletedMovieId));
+    });
+
+    return () => {
+      socket.disconnect();
+    }
+  }, [])
 
   useEffect(() => {
     const token = localStorage.getItem('jwtToken');
@@ -35,39 +75,55 @@ const AllMovies: React.FC = () => {
       navigate('/signin'); // Redirect to signup if token not found
     }
   }, [navigate]);
-  useEffect(() => {
+
+  useEffect(()=>{
     const getMovies = async () => {
       dispatch(fetchMoviesStart());
       try {
-        // const token = localStorage.getItem('excess_token')
-        // const token = localStorage.getItem('access_token')
         const token = localStorage.getItem("jwtToken")
         // console.log(token, 'token-----')
         if (!token) {
           toast.error("user is not authenticated")
         }
-        
-        const response = await custom_axios.get('movies/findAll', {
+  
+        const response = await custom_axios.get(`movies/findAll?page=${currentPage}&limit=${moviesPerPage}`, {
           headers: {
             Authorization: `Bearer ${token}`
-          }
+          },
         });
-        dispatch(fetchMoviesSuccess(response.data))
-        if (response.data) {
-          setGetmovies(response.data);
-        }
-      } catch (error:any) {
+        // const moviesData = {
+        //   movies:response.data.movies,
+        //   currentPage:page,
+        //   totalPages:Math.ceil(response.data.total/10),
+        // }
+        setGetmovies(response.data.movies);
+        dispatch(fetchMoviesSuccess(response.data));
+        // if (response.data) {
+        //   setGetmovies(response.data);
+        // }
+  
+  
+  
+      } catch (error: any) {
         // const axiosError = error as AxiosError<ErrorResponse>;
         // toast.error(axiosError.response?.data?.message || 'Failed to fetch movies');
         dispatch(fetchMoviesFailure(error.message));
         toast.error('Failed to fetch movies')
       }
     };
-
     getMovies();
-  }, [dispatch]);
 
+  },[dispatch,currentPage]);
+ 
+  const handleNext = () =>{
+    setCurrentPage((prevPage)=>prevPage+1)
+  }
 
+  const handlePrevious = () => {
+    if (currentPage > 1) {
+      setCurrentPage((prevPage) => prevPage - 1);
+    }
+  }
   // const user = JSON.parse(localStorage.getItem('user-object')||'')
   // useEffect(()=>{
   //     console.log(user,'---------->>>')
@@ -130,9 +186,9 @@ const AllMovies: React.FC = () => {
 
   const fetchMoviesByCategory = async (category: string) => {
     try {
-      console.log(category,'category---------')
+      console.log(category, 'category---------')
       const lowerCategory = category.toLowerCase()
-      console.log(lowerCategory,'lowerCategory---------')
+      console.log(lowerCategory, 'lowerCategory---------')
 
       const response = await custom_axios.get(`movies/category/${lowerCategory}`);
       // console.log(response.data)
@@ -142,23 +198,23 @@ const AllMovies: React.FC = () => {
       toast.error(axiosError.response?.data?.message || 'Failed to fetch movies');
     }
   }
-//search movies by its name
+  //search movies by its name
 
-const [searchQuery,setSearchQuery] = useState<string>('');
-const [filterMovies,setFilterMovies] = useState<Movie[]>(movies);
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [filterMovies, setFilterMovies] = useState<Movie[]>(movies);
 
-useEffect(()=>{
-  if(searchQuery ===''){
-    setFilterMovies(movies)
-  }
-  else{
-    setFilterMovies(
-      movies.filter((movie)=>
-      movie.title.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    if (searchQuery === '') {
+      setFilterMovies(movies)
+    }
+    else {
+      setFilterMovies(
+        movies.filter((movie) =>
+          movie.title.toLowerCase().includes(searchQuery.toLowerCase())
+        )
       )
-    )
-  }
-},[searchQuery,movies])
+    }
+  }, [searchQuery, movies])
   return (
     <>
       {loading && <p>Loading....</p>}
@@ -168,7 +224,7 @@ useEffect(()=>{
           All Your Favourite Movies
         </div>
       </div>
-        {/* movies search by category */}
+      {/* movies search by category */}
       <div className="text-white ">
         <button onClick={() => setSelectedCategory('Action')} className="py-2 px-4 bg-red-700 rounded-sm">Action</button>
         <button onClick={() => setSelectedCategory('Horror')} className="py-2 px-4 bg-red-700 rounded-sm">Horror</button>
@@ -179,45 +235,45 @@ useEffect(()=>{
         <button onClick={() => setSelectedCategory('Fantasy')} className="py-2 px-4 bg-red-700 rounded-sm">Fantasy</button>
         <button onClick={() => setSelectedCategory('Animation')} className="py-2 px-4 bg-red-700 rounded-sm">Animation</button>
       </div>
-     
-   
+
+
 
       {/* searched movies */}
       <div>
         <div className="">
-       
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-5">
-        {
-          categoryMovies.map((movie) => (
-            <div key={movie.id} className="relative group cursor-pointer">
-              <img
-                src={movie.image}
-                alt={movie.title}
-                className="w-full h-72 object-cover rounded-md transition-transform duration-300 transform group-hover:scale-110"
-              />
-              <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 rounded-md">
-                <h3 className="text-white text-lg font-semibold">{movie.title}</h3>
-                <p className="text-gray-300 text-sm">{movie.genre}</p>
-                <p className="text-gray-400 text-xs mt-1">Release Date: {movie.releaseDate}</p>
-                <button className="p-3 bg-red text-white" onClick={() => handleAddToFavorites(movie.id)}>Add to Favourite</button>
-              </div>
-            </div>
-          ))
-        }
 
-      </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-5">
+            {
+              categoryMovies.map((movie) => (
+                <div key={movie.id} className="relative group cursor-pointer">
+                  <img
+                    src={movie.image}
+                    alt={movie.title}
+                    className="w-full h-72 object-cover rounded-md transition-transform duration-300 transform group-hover:scale-110"
+                  />
+                  <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 rounded-md">
+                    <h3 className="text-white text-lg font-semibold">{movie.title}</h3>
+                    <p className="text-gray-300 text-sm">{movie.genre}</p>
+                    <p className="text-gray-400 text-xs mt-1">Release Date: {movie.releaseDate}</p>
+                    <button className="p-3 bg-red text-white" onClick={() => handleAddToFavorites(movie.id)}>Add to Favourite</button>
+                  </div>
+                </div>
+              ))
+            }
+
+          </div>
 
 
 
-          
+
         </div>
       </div>
-       {/* search movies by its name */}
-       <div className="mb-4">
-        <input type="text" placeholder="search movies...." value={searchQuery} onChange={(e)=>setSearchQuery(e.target.value)} className="search-input p-2 border border-gray-300 rounded w-full md:w-1/3"/>
+      {/* search movies by its name */}
+      <div className="mb-4">
+        <input type="text" placeholder="search movies...." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="search-input p-2 border border-gray-300 rounded w-full md:w-1/3" />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-5">
-        {filterMovies.length > 0 ? (
+        {filterMovies?.length > 0 ? (
           filterMovies.map((movie) => (
             <div key={movie.id} className="relative group cursor-pointer">
               <img
@@ -231,12 +287,23 @@ useEffect(()=>{
                 <p className="text-gray-400 text-xs mt-1">Release Date: {movie.releaseDate}</p>
                 <button className="p-3 bg-red text-white" onClick={() => handleAddToFavorites(movie.id)}>Add to Favourite</button>
               </div>
+                
+             
+
             </div>
+
           ))
+          
         ) : (
           <p className="text-black text-center col-span-full text-white">No movies available</p>
         )}
-      <ToastContainer />
+       <div className="text-white">
+        <button onClick={handlePrevious} disabled={currentPage === 1} className="w-full py-3 px-5 bg-red-700 opacity-100 rounded-sm my-5 text-white font-semibold">
+          Previous
+        </button>
+        <button onClick={handleNext} className="w-full py-3 px-5 bg-red-700 opacity-100 rounded-sm my-5 text-white font-semibold">Next</button>
+      </div>
+        <ToastContainer />
 
       </div>
     </>

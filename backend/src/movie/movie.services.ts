@@ -3,25 +3,36 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Movie } from "./movie.entity";
 import { Repository } from "typeorm";
 import { MovieDto } from "src/dto/movie.dto";
+import { MoviesGateway } from "./movie.gateway";
 
 @Injectable()
 export class MovieServices {
+
     constructor(
         @InjectRepository(Movie)
-        private movieRepository: Repository<Movie>
+        private movieRepository: Repository<Movie>,
+        private movieGateway: MoviesGateway
     ) { }
     async create(movieDto: MovieDto): Promise<Movie> {
         const movie = this.movieRepository.create(movieDto);
-        return this.movieRepository.save(movie)
+        const savedMovie = await this.movieRepository.save(movie)
+        this.movieGateway.server.emit('movieCreated', savedMovie);
+        return savedMovie
+        // return this.movieRepository.save(movie)
     }
-    findAll(): Promise<Movie[]> {
-        return this.movieRepository.find()
+    findAll(offset:any,limit:number): Promise<Movie[]> {
+        return this.movieRepository.find({
+            skip:offset,
+            take:limit,
+        })
     }
+   
     findOne(id: number): Promise<Movie> {
         return this.movieRepository.findOneBy({ id })
     }
     async remove(id: number): Promise<void> {
         await this.movieRepository.delete(id);
+        this.movieGateway.server.emit('movieDeleted', id)
     }
     async update(id: number, movieDto: MovieDto): Promise<Movie> {
         const movie = await this.movieRepository.findOne({ where: { id: id } })
@@ -33,13 +44,14 @@ export class MovieServices {
             movie.image = movieDto.image
         }
         await this.movieRepository.update(id, movieDto);
+        this.movieGateway.server.emit('movieUpdated', { id, ...movieDto });
         return this.findOne(id)
     }
 
     // search movies by category
 
     async findByCategory(category: string): Promise<Movie[]> {
-        const query = this.movieRepository
+        const query = await this.movieRepository
             .createQueryBuilder('movie')
             .where('movie.genre=:category', { category })
             .getMany();
