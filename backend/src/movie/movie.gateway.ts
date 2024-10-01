@@ -12,21 +12,3 @@ export class MoviesGateway{
 
    
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// Access key: AKIA6D6JBJN5TPKQS5X4
-// Secret access key: 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
-//amperornetflixclone
