@@ -6,9 +6,13 @@ import { User } from './user/user.entity';
 import { Movie } from './movie/movie.entity';
 import { MovieModule } from './movie/movie.module';
 import { FavouriteMovie } from './user/favouriteMovie/FavouriteMovie.entity';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
-  imports: [TypeOrmModule.forRoot({
+  imports: [ConfigModule.forRoot({
+    isGlobal: true, 
+    envFilePath: '.env',
+  }),TypeOrmModule.forRoot({
     type: 'postgres',
     host: 'localhost',
     port: 5432,

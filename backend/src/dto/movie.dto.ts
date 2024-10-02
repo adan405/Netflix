@@ -31,4 +31,10 @@ export class MovieDto {
     @IsString()
     @IsNotEmpty()
     image: string;
+
+    @ApiProperty()
+    @IsOptional()
+    @IsString()
+  
+    movieUrl?:string;
 }

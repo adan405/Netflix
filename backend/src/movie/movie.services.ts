@@ -5,28 +5,61 @@ import { Repository } from "typeorm";
 import { MovieDto } from "src/dto/movie.dto";
 import { MoviesGateway } from "./movie.gateway";
 
+import { v4 as uuid } from "uuid"
+import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
 @Injectable()
 export class MovieServices {
-
+    //cloud implemention
+    private s3 = new S3Client({
+        region: "eu-north-1",
+        credentials: {
+          accessKeyId: "AKIA6D6JBJN5TPKQS5X4",
+          secretAccessKey: "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",
+        },
+        endpoint: "https://s3.eu-north-1.amazonaws.com",
+      });
     constructor(
         @InjectRepository(Movie)
         private movieRepository: Repository<Movie>,
         private movieGateway: MoviesGateway
     ) { }
-    async create(movieDto: MovieDto): Promise<Movie> {
-        const movie = this.movieRepository.create(movieDto);
-        const savedMovie = await this.movieRepository.save(movie)
+
+    //upload a movie
+    async uploadFile(file: Express.Multer.File): Promise<string> {
+        const fileKey = `${uuid()}-${file.originalname}`;
+
+        const params = {
+            Bucket: "amperornetflixclone",
+            Key: fileKey,
+            Body: file.buffer,
+            ContentType: file.mimetype,
+        };
+        try {
+            await this.s3.send(new PutObjectCommand(params))
+        return `https://amperornetflixclone.s3.eu-north-1.amazonaws.com/${fileKey}`;
+        } catch (error) {
+            console.error('Error uploading file to S3:', error);
+        throw new Error('File upload failed');
+        }
+        
+
+    }
+
+    async create(movieDto: MovieDto,fileUrl:string): Promise<Movie> {
+        console.log('file url=====', fileUrl)
+        const movie = this.movieRepository.create({...movieDto,movieUrl:fileUrl});
+        const savedMovie = await this.movieRepository.save(movie);
         this.movieGateway.server.emit('movieCreated', savedMovie);
         return savedMovie
         // return this.movieRepository.save(movie)
     }
-    findAll(offset:any,limit:number): Promise<Movie[]> {
+    findAll(offset: any, limit: number): Promise<Movie[]> {
         return this.movieRepository.find({
-            skip:offset,
-            take:limit,
+            skip: offset,
+            take: limit,
         })
     }
-   
+
     findOne(id: number): Promise<Movie> {
         return this.movieRepository.findOneBy({ id })
     }

@@ -21,7 +21,8 @@ export class Movie {
 
     @Column()
     image: string;
-
+    @Column({nullable:true})
+    movieUrl:string
     @OneToMany(()=>FavouriteMovie,(favouriteMovie)=>favouriteMovie.movie)
    
 
