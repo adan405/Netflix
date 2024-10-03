@@ -1,6 +1,7 @@
 import custom_axios from "../connection/axios";
 import axios, { AxiosError } from "axios";
 import { useState, useEffect } from "react";
+// import ReactPlayer from 'react-player';
 
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -23,6 +24,7 @@ interface Movie {
   genre: string;
   description: string;
   image: string;
+  videoUrl:string;
 }
 
 const AllMovies: React.FC = () => {
@@ -43,25 +45,37 @@ const AllMovies: React.FC = () => {
 
     socket.on('movieCreated', (newMovie) => {
       console.log('New movie created==============', newMovie);
-      setGetmovies([...getmovies, newMovie])
+      setGetmovies((prevMovies) => [...prevMovies, newMovie]);
     })
+
+    // socket.on('movieUpdated', (updatedMovie) => {
+    //   console.log('Movie updated=============', updatedMovie);
+    //   setGetmovies([updatedMovie])
+    // });
+    //    socket.on('movieUpdated', (updatedMovie) => {
+    //   console.log('Movie updated=============', updatedMovie);
+    //   setGetmovies(()=>[updatedMovie])
+    // });
 
     socket.on('movieUpdated', (updatedMovie) => {
       console.log('Movie updated=============', updatedMovie);
+
       setGetmovies(prevMovies => {
-        if(prevMovies && prevMovies.length){
-          return prevMovies.map(movie =>
-            movie.id === updatedMovie.id ? { ...movie, ...updatedMovie } : movie
-          )
-        }
-        return prevMovies || [];
-        }
-       );
+        return prevMovies.map(movie =>
+          movie.id === updatedMovie.id ? updatedMovie : movie
+        );
+      });
     });
     socket.on('movieDeleted', (deletedMovieId) => {
-      console.log('Movie deleted===============', deletedMovieId);
-      setGetmovies(preMovies => preMovies.filter(movie => movie.id !== deletedMovieId));
+      setGetmovies((prevMovies) =>
+        prevMovies.filter(movie => movie.id !== deletedMovieId)
+      );
     });
+
+    // socket.on('movieDeleted', (deletedMovieId) => {
+    //   console.log('Movie deleted===============', deletedMovieId);
+    //   setGetmovies([]);
+    // });
 
     return () => {
       socket.disconnect();
@@ -76,34 +90,32 @@ const AllMovies: React.FC = () => {
     }
   }, [navigate]);
 
-  useEffect(()=>{
+  useEffect(() => {
     const getMovies = async () => {
       dispatch(fetchMoviesStart());
       try {
         const token = localStorage.getItem("jwtToken")
         // console.log(token, 'token-----')
         if (!token) {
-          toast.error("user is not authenticated")
+          toast.error("user is not authenticated");
+          return;
         }
-  
+
         const response = await custom_axios.get(`movies/findAll?page=${currentPage}&limit=${moviesPerPage}`, {
           headers: {
             Authorization: `Bearer ${token}`
           },
         });
-        // const moviesData = {
-        //   movies:response.data.movies,
-        //   currentPage:page,
-        //   totalPages:Math.ceil(response.data.total/10),
-        // }
-        setGetmovies(response.data.movies);
+        setGetmovies((preMovies) => [...preMovies, ...response.data])
+
+        // console.log('previous data======',...response.data)
         dispatch(fetchMoviesSuccess(response.data));
         // if (response.data) {
         //   setGetmovies(response.data);
         // }
-  
-  
-  
+
+
+
       } catch (error: any) {
         // const axiosError = error as AxiosError<ErrorResponse>;
         // toast.error(axiosError.response?.data?.message || 'Failed to fetch movies');
@@ -113,10 +125,10 @@ const AllMovies: React.FC = () => {
     };
     getMovies();
 
-  },[dispatch,currentPage]);
- 
-  const handleNext = () =>{
-    setCurrentPage((prevPage)=>prevPage+1)
+  }, [dispatch, currentPage]);
+
+  const handleNext = () => {
+    setCurrentPage((prevPage) => prevPage + 1)
   }
 
   const handlePrevious = () => {
@@ -201,20 +213,33 @@ const AllMovies: React.FC = () => {
   //search movies by its name
 
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [filterMovies, setFilterMovies] = useState<Movie[]>(movies);
+  // const [filterMovies, setFilterMovies] = useState<Movie[]>(movies);
 
-  useEffect(() => {
-    if (searchQuery === '') {
-      setFilterMovies(movies)
-    }
-    else {
-      setFilterMovies(
-        movies.filter((movie) =>
-          movie.title.toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      )
-    }
-  }, [searchQuery, movies])
+  // useEffect(() => {
+  //   if (searchQuery === '') {
+  //     setFilterMovies(movies)
+  //   }
+  //   else {
+  //     setFilterMovies(
+  //       movies.filter((movie) =>
+  //         movie.title.toLowerCase().includes(searchQuery.toLowerCase())
+  //       )
+  //     )
+  //   }
+  // }, [searchQuery, movies])
+
+  //videoplayer
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null)
+  const handleMovieClick = (movie: Movie) => {
+    setSelectedMovie(movie)
+    setIsModalOpen(true);
+  }
+  const closeModal = () => {
+
+    setIsModalOpen(false)
+    setSelectedMovie(null)
+  }
   return (
     <>
       {loading && <p>Loading....</p>}
@@ -273,9 +298,9 @@ const AllMovies: React.FC = () => {
         <input type="text" placeholder="search movies...." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="search-input p-2 border border-gray-300 rounded w-full md:w-1/3" />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-5">
-        {filterMovies?.length > 0 ? (
-          filterMovies.map((movie) => (
-            <div key={movie.id} className="relative group cursor-pointer">
+        {getmovies?.length > 0 ? (
+          getmovies.map((movie) => (
+            <div onClick={() => handleMovieClick(movie)} key={movie.id} className="relative group cursor-pointer">
               <img
                 src={movie.image}
                 alt={movie.title}
@@ -285,29 +310,58 @@ const AllMovies: React.FC = () => {
                 <h3 className="text-white text-lg font-semibold">{movie.title}</h3>
                 <p className="text-gray-300 text-sm">{movie.genre}</p>
                 <p className="text-gray-400 text-xs mt-1">Release Date: {movie.releaseDate}</p>
-                <button className="p-3 bg-red text-white" onClick={() => handleAddToFavorites(movie.id)}>Add to Favourite</button>
               </div>
-                
-             
-
             </div>
-
           ))
-          
         ) : (
           <p className="text-black text-center col-span-full text-white">No movies available</p>
         )}
-       <div className="text-white">
-        <button onClick={handlePrevious} disabled={currentPage === 1} className="w-full py-3 px-5 bg-red-700 opacity-100 rounded-sm my-5 text-white font-semibold">
-          Previous
-        </button>
-        <button onClick={handleNext} className="w-full py-3 px-5 bg-red-700 opacity-100 rounded-sm my-5 text-white font-semibold">Next</button>
-      </div>
-        <ToastContainer />
 
+        <div className="text-white">
+          <button onClick={handlePrevious} disabled={currentPage === 1} className="w-full py-3 px-5 bg-red-700 opacity-100 rounded-sm my-5 text-white font-semibold">
+            Previous
+          </button>
+          <button onClick={handleNext} className="w-full py-3 px-5 bg-red-700 opacity-100 rounded-sm my-5 text-white font-semibold">
+            Next
+          </button>
+        </div>
+
+
+        {isModalOpen && selectedMovie && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 z-50">
+          <div className="relative w-full max-w-4xl">
+            <button
+              className=" top-2 right-2 bg-red-500 text-white p-2 rounded-full"
+              onClick={closeModal}
+            >
+              X
+            </button>
+            <video
+              controls
+              className="w-full h-auto"
+              src={selectedMovie.videoUrl} 
+              autoPlay
+              onEnded={closeModal} 
+            />
+          </div>
+        </div>
+      )}
       </div>
+
+      <ToastContainer />
     </>
   );
 };
 
 export default AllMovies;
+
+
+
+
+
+
+
+
+
+
+// 970547350395
