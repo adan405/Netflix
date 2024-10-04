@@ -131,7 +131,7 @@ const SignUpFlow: React.FC = () => {
                             <span>STEP 3 OF 3</span>
                             <h1 className="text-3xl font-bold">Choose your plan.</h1>
                         </div>
-                        <div className='flex flex-wrap'>
+                        <div className='flex flex-wrap text-white'>
                             {
                                 ChoosePlans.map((item) => (
 

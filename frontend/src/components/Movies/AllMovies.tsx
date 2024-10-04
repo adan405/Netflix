@@ -24,7 +24,7 @@ interface Movie {
   genre: string;
   description: string;
   image: string;
-  videoUrl:string;
+  movieUrl:string;
 }
 
 const AllMovies: React.FC = () => {
@@ -32,6 +32,7 @@ const AllMovies: React.FC = () => {
   const dispatch = useDispatch();
   const { movies, loading, error } = useSelector((state: RootState) => state.movies)
   const [getmovies, setGetmovies] = useState<Movie[]>([]);
+  // const [movieCashe, setMovieCashe] = useState<{[key:number]:Movie[]}>({})
   //pagination functionality
   const [currentPage, setCurrentPage] = useState(1);
   const moviesPerPage = 10;
@@ -93,6 +94,8 @@ const AllMovies: React.FC = () => {
   useEffect(() => {
     const getMovies = async () => {
       dispatch(fetchMoviesStart());
+
+
       try {
         const token = localStorage.getItem("jwtToken")
         // console.log(token, 'token-----')
@@ -106,8 +109,21 @@ const AllMovies: React.FC = () => {
             Authorization: `Bearer ${token}`
           },
         });
-        setGetmovies((preMovies) => [...preMovies, ...response.data])
 
+        //for pignation
+        // setGetmovies((preMovies) => [...preMovies, ...response.data])
+        // setGetmovies(response.data)
+        const newMovies = response.data
+        console.log(response.data,'response.data==============')
+
+       
+
+        if(currentPage>1){
+          setGetmovies((preMovies)=>[...preMovies,...newMovies]);
+        }else{
+          setGetmovies(newMovies);
+        }
+         
         // console.log('previous data======',...response.data)
         dispatch(fetchMoviesSuccess(response.data));
         // if (response.data) {
@@ -232,6 +248,7 @@ const AllMovies: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null)
   const handleMovieClick = (movie: Movie) => {
+    console.log(movie,'movie url----------')
     setSelectedMovie(movie)
     setIsModalOpen(true);
   }
@@ -240,6 +257,8 @@ const AllMovies: React.FC = () => {
     setIsModalOpen(false)
     setSelectedMovie(null)
   }
+  console.log(getmovies,'getmovies==============')
+  console.log(selectedMovie?.movieUrl,'movieUrl===========')
   return (
     <>
       {loading && <p>Loading....</p>}
@@ -310,6 +329,7 @@ const AllMovies: React.FC = () => {
                 <h3 className="text-white text-lg font-semibold">{movie.title}</h3>
                 <p className="text-gray-300 text-sm">{movie.genre}</p>
                 <p className="text-gray-400 text-xs mt-1">Release Date: {movie.releaseDate}</p>
+                <button className="p-3 bg-red text-white" onClick={() => handleAddToFavorites(movie.id)}>Add to Favourite</button>
               </div>
             </div>
           ))
@@ -339,7 +359,7 @@ const AllMovies: React.FC = () => {
             <video
               controls
               className="w-full h-auto"
-              src={selectedMovie.videoUrl} 
+              src={selectedMovie.movieUrl} 
               autoPlay
               onEnded={closeModal} 
             />

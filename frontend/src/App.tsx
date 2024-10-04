@@ -18,7 +18,7 @@ const App: React.FC = () => {
     { path: "/", element: <Redirect /> },
     { path: "/home", element: <ProtectedRoutes><Home /></ProtectedRoutes> },
     { path: "/signin", element: <SignIn /> },
-    { path: "/signup", element: <ProtectedRoutes><SignUp /></ProtectedRoutes> },
+    { path: "/signup", element:<SignUp />},
     { path: "/allmovie", element: <ProtectedRoutes><AllMovies/></ProtectedRoutes> },
     { path: "/addmovie", element: <ProtectedRoutes><AddMovie /></ProtectedRoutes> },
     { path: "/yourfavouritemovies", element: <ProtectedRoutes><FavouriteMovies /></ProtectedRoutes> },

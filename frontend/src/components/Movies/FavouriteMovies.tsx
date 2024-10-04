@@ -45,7 +45,8 @@ const FavouriteMovies: React.FC = () => {
             Authorization: `Bearer ${token}`
           }
         });
-        // console.log(response.data, 'resopse.data------------')
+        console.log(userId, "userid------========")
+        console.log(response.data, 'favourite movies resopse.data------------')
         if (response.data) {
           setFavouriteMovies(response.data);
           // console.log(response.data, 'response data==========')
@@ -57,34 +58,35 @@ const FavouriteMovies: React.FC = () => {
     };
 
     getMovies();
+    console.log(favouriteMovies, 'favouriteMovies000000000000----?4?')
   }, []);
-  console.log(favouriteMovies,'favouriteMovies000000000000----??')
   return (
     <>
-      <ToastContainer />
       <div className='AddMovie flex justify-center items-center flex-col'>
-        <div className='text-4xl text-white'>
-          Your Collection
-        </div>
+        <div className='text-4xl text-white'>Your Collection</div>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-5">
         {
-          favouriteMovies.map((movie) => (
-            <div className="text-white" key={movie.id}>
-              <img
-                src={movie.image}
-                alt={movie.title}
-                className="w-full h-72 object-cover rounded-md transition-transform duration-300 transform group-hover:scale-110"
-              />
-              {/* <img src={movie.image} alt="movie" /> */}
-              <p>{movie.title}</p>
-              <p>{movie.releaseDate}</p>
-            </div>
-          ))
+          favouriteMovies.length > 0 ? (
+            favouriteMovies.map((movie) => (
+              <div className="text-white" key={movie.id}>
+                <img
+                  src={movie.image}
+                  alt={movie.title}
+                  className="w-full h-72 object-cover rounded-md transition-transform duration-300 transform group-hover:scale-110"
+                />
+                <p>{movie.title}</p>
+                <p>{movie.releaseDate}</p>
+              </div>
+            ))
+          ) : (
+            <p className="text-white">No favourite movies found.</p>
+          )
         }
       </div>
+      <ToastContainer />
     </>
   );
-};
+}
 
 export default FavouriteMovies;

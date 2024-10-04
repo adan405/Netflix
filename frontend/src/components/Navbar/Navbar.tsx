@@ -10,7 +10,7 @@ const Navbar: React.FC = () => {
     const [menuOpen, setMenuOpen] = useState(false);
     const [isLogin, setIsLogin] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    const [dropdownOpen, setDropdownOpen] = useState(false); // State for dropdown
+    const [dropdownOpen, setDropdownOpen] = useState(false); 
 
     useEffect(() => {
         const token = localStorage.getItem('jwtToken');
@@ -104,10 +104,10 @@ const Navbar: React.FC = () => {
                 {menuOpen && (
                     <div className="md:hidden bg-black text-white absolute w-full py-5 px-5 space-y-4">
                         <ul>
-                            <li className="py-2 border-b border-gray-600 cursor-pointer hover:text-gray-300">Add Movies</li>
-                            <li className="py-2 border-b border-gray-600 cursor-pointer hover:text-gray-300">All Movies</li>
+                            <li className="py-2 border-b border-gray-600 cursor-pointer hover:text-gray-300"><Link to="/addmovie">Add Movies</Link></li>
+                            <li className="py-2 border-b border-gray-600 cursor-pointer hover:text-gray-300"><Link to="/allmovie">All Movies</Link></li>
                             <li className="py-2 border-b border-gray-600 cursor-pointer hover:text-gray-300">Category</li>
-                            <li className="py-2 border-b border-gray-600 cursor-pointer hover:text-gray-300">Favorite Movies</li>
+                            <li className="py-2 border-b border-gray-600 cursor-pointer hover:text-gray-300"><Link to="/yourfavouritemovies">Favorite Movies</Link></li>
                         </ul>
                     </div>
                 )}
