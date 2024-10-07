@@ -12,6 +12,7 @@ import SignIn from './pages/SignIn';
 import SignUp from './pages/SignUp';
 import FavouriteMovies from './components/Movies/FavouriteMovies';
 import Redirect from './components/routes/Redirect';
+import UpdateMovies from './components/Movies/UpdateMovies';
 const App: React.FC = () => {
   
   const router = createBrowserRouter([
@@ -22,6 +23,7 @@ const App: React.FC = () => {
     { path: "/allmovie", element: <ProtectedRoutes><AllMovies/></ProtectedRoutes> },
     { path: "/addmovie", element: <ProtectedRoutes><AddMovie /></ProtectedRoutes> },
     { path: "/yourfavouritemovies", element: <ProtectedRoutes><FavouriteMovies /></ProtectedRoutes> },
+    {path:'updatemovies', element:<UpdateMovies/>}
     // { path: "/addmovie", element: <ProtectedRoutes><AddMovie /> </ProtectedRoutes>},
     // { path: "/allmovie", element: <AllMovies /> },
 

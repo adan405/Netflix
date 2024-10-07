@@ -4,6 +4,8 @@ import axios, { AxiosError } from "axios";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { useNavigate } from 'react-router-dom';
+import Footer from '../footer/Footer';
+import Navbar from '../Navbar/Navbar';
 interface ErrorResponse {
   message: string;
 }
@@ -25,16 +27,16 @@ const AddMovie: React.FC = () => {
 
 
   //upload movie
-  const [selectedFile,setSelectedFile] = useState<File |null>(null);
-  const [uploadProgress,setUploadProgress] = useState(0);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   //handle file selection
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>)=>{
-    const file = e.target.files ? e.target.files[0]:null;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files ? e.target.files[0] : null;
     setSelectedFile(file)
   }
 
-  const handleFileUpload = async (e: React.FormEvent<HTMLFormElement>) =>{
+  const handleFileUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!title || !releaseDate || !genre || !description || !image) {
       toast.error("Please fill in all required fields.");
@@ -42,30 +44,30 @@ const AddMovie: React.FC = () => {
     }
 
     const formData = new FormData();
-    formData.append('title',title);
+    formData.append('title', title);
     formData.append("releaseDate", releaseDate);
     formData.append("genre", genre);
     formData.append("description", description);
     formData.append("image", image);
-    if(selectedFile){
+    if (selectedFile) {
       formData.append("file", selectedFile);
-    }else{
+    } else {
       toast.error("Please select a file to upload.");
       return;
     }
     try {
-      const response = await axios.post('http://localhost:4000/movies/add',formData,{
-        headers:{
-          'Content-Type':'multipart/form-data',
+      const response = await axios.post('http://localhost:4000/movies/add', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
         },
-        onUploadProgress:(progressEvent)=>{
-          if(progressEvent.total){
-            const precentCompleted = Math.round((progressEvent.loaded * 100)/progressEvent.total);
+        onUploadProgress: (progressEvent) => {
+          if (progressEvent.total) {
+            const precentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
             setUploadProgress(precentCompleted);
           }
         },
       });
-      console.log('file uploaded succeffully=======',response.data.message)
+      console.log('file uploaded succeffully=======', response.data.message)
       navigate('/allmovie')
     } catch (error) {
       const axiosError = error as AxiosError<ErrorResponse>;
@@ -74,6 +76,7 @@ const AddMovie: React.FC = () => {
   }
   return (
     <>
+      <Navbar />
       <div className='AddMovie flex justify-center items-center flex-col'>
 
         <div className='text-4xl text-white '>
@@ -90,14 +93,14 @@ const AddMovie: React.FC = () => {
           <div>
             <h3 className='text-white'>upload movie</h3>
             <div>
-              <input type="file" accept='video/*' onChange={handleFileChange}/>
-              
+              <input type="file" accept='video/*' onChange={handleFileChange} />
+
             </div>
             {
               uploadProgress > 0 && (
                 <div className='mt-4'>
-                <p className='text-white'>Upload Progress: {uploadProgress}%</p>
-              </div>
+                  <p className='text-white'>Upload Progress: {uploadProgress}%</p>
+                </div>
               )
             }
           </div>
@@ -110,7 +113,7 @@ const AddMovie: React.FC = () => {
           </div>
         </form>
       </div>
-
+      <Footer />
     </>
   );
 }

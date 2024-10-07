@@ -13,11 +13,11 @@ export class MovieServices {
     private s3 = new S3Client({
         region: "eu-north-1",
         credentials: {
-          accessKeyId: "AKIA6D6JBJN5TPKQS5X4",
-          secretAccessKey: "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",
+            accessKeyId: "AKIA6D6JBJN5TPKQS5X4",
+            secretAccessKey: "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",
         },
         endpoint: "https://s3.eu-north-1.amazonaws.com",
-      });
+    });
     constructor(
         @InjectRepository(Movie)
         private movieRepository: Repository<Movie>,
@@ -36,18 +36,18 @@ export class MovieServices {
         };
         try {
             await this.s3.send(new PutObjectCommand(params))
-        return `https://amperornetflixclone.s3.eu-north-1.amazonaws.com/${fileKey}`;
+            return `https://amperornetflixclone.s3.eu-north-1.amazonaws.com/${fileKey}`;
         } catch (error) {
             console.error('Error uploading file to S3:', error);
-        throw new Error('File upload failed');
+            throw new Error('File upload failed');
         }
-        
+
 
     }
 
-    async create(movieDto: MovieDto,fileUrl:string): Promise<Movie> {
+    async create(movieDto: MovieDto, fileUrl: string): Promise<Movie> {
         console.log('file url=====', fileUrl)
-        const movie = this.movieRepository.create({...movieDto,movieUrl:fileUrl});
+        const movie = this.movieRepository.create({ ...movieDto, movieUrl: fileUrl });
         const savedMovie = await this.movieRepository.save(movie);
         this.movieGateway.server.emit('movieCreated', savedMovie);
         return savedMovie
@@ -59,7 +59,12 @@ export class MovieServices {
             take: limit,
         })
     }
-
+    //trending movies
+    trendingMovies(limit: number): Promise<Movie[]> {
+        return this.movieRepository.find({
+            take: limit
+        })
+    }
     findOne(id: number): Promise<Movie> {
         return this.movieRepository.findOneBy({ id })
     }
@@ -67,19 +72,49 @@ export class MovieServices {
         await this.movieRepository.delete(id);
         this.movieGateway.server.emit('movieDeleted', id)
     }
-    async update(id: number, movieDto: MovieDto): Promise<Movie> {
-        const movie = await this.movieRepository.findOne({ where: { id: id } })
-        if (movie) {
-            movie.title = movieDto.title
-            movie.releaseDate = movieDto.releaseDate
-            movie.genre = movieDto.genre
-            movie.description = movieDto.description
-            movie.image = movieDto.image
+    // async update(id: number, movieDto: MovieDto): Promise<Movie> {
+    //     const movie = await this.movieRepository.findOne({ where: { id: id } })
+    //     if (movie) {
+    //         movie.title = movieDto.title
+    //         movie.releaseDate = movieDto.releaseDate
+    //         movie.genre = movieDto.genre
+    //         movie.description = movieDto.description
+    //         movie.image = movieDto.image
+    //     }
+    //     await this.movieRepository.update(id, movieDto);
+    //     this.movieGateway.server.emit('movieUpdated', { id, ...movieDto });
+    //     return this.findOne(id)
+    // }
+
+    async update(id: number, movieDto: MovieDto,file?:Express.Multer.File): Promise<Movie> {
+        const movie = await this.movieRepository.findOne({ where: { id } });
+        
+        if (!movie) {
+            throw new Error('Movie not found');
         }
-        await this.movieRepository.update(id, movieDto);
-        this.movieGateway.server.emit('movieUpdated', { id, ...movieDto });
-        return this.findOne(id)
+        let updatedFilePath = movie.movieUrl;
+        if(file){
+            updatedFilePath =`path/to/your/uploads/${file.filename}`
+        }
+        
+        const updatedMovie = {
+            ...movie,  
+            ...(movieDto.title && { title: movieDto.title }),  
+            ...(movieDto.releaseDate && { releaseDate: movieDto.releaseDate }),
+            ...(movieDto.genre && { genre: movieDto.genre }),
+            ...(movieDto.description && { description: movieDto.description }),
+            ...(movieDto.image && { image: movieDto.image }),
+        };
+    
+      
+        await this.movieRepository.save(updatedMovie);
+    
+        
+        this.movieGateway.server.emit('movieUpdated', { id, ...updatedMovie });
+    
+        return this.findOne(id);  
     }
+    
 
     // search movies by category
 
@@ -92,3 +127,9 @@ export class MovieServices {
         return query;
     }
 }
+
+
+// node mailer
+// rdsservices
+
+// dump pgadmin

@@ -1,7 +1,6 @@
-import { useEffect } from 'react';
-import Navbar from '../components/Navbar/Navbar';
 import Hero from '../components/home/Hero';
-import ActionMovies from '../components/Movies/ActionMovies';
+import TrendingMovies from '../components/home/TrendingMovies';
+import Layout from '../components/layout/Layout';
 
 const Home: React.FC = () => {
     // const user = JSON.parse(localStorage.getItem('user-object')||'')
@@ -10,9 +9,10 @@ const Home: React.FC = () => {
     // })
     return (
         <div>
-            <Navbar />
-            <Hero />
-            <ActionMovies />
+            <Layout>
+                <Hero />
+                <TrendingMovies />
+            </Layout>
         </div>
     )
 }

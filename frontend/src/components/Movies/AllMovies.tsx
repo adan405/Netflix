@@ -42,7 +42,10 @@ const AllMovies: React.FC = () => {
     const socket = io('http://localhost:4000');
     socket.on('connect', () => {
       console.log('Connected to WebSocket========');
-    });
+      
+    },
+   
+  );
 
     socket.on('movieCreated', (newMovie) => {
       console.log('New movie created==============', newMovie);
@@ -81,7 +84,7 @@ const AllMovies: React.FC = () => {
     return () => {
       socket.disconnect();
     }
-  }, [])
+  }, [getmovies])
 
   useEffect(() => {
     const token = localStorage.getItem('jwtToken');
