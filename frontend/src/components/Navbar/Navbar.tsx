@@ -28,21 +28,24 @@ const Navbar: React.FC = () => {
         return () => {
             window.removeEventListener('scroll', handleScroll);
         };
-    }, []);
+    }, [isScrolled]);
 
     const handleLogout = () => {
         localStorage.removeItem('jwtToken');
         setIsLogin(false);
         navigate("/signin");
     };
-
+    const handleCategoryClick = (category:string) =>{
+        navigate(`/movies/category/${category.toLowerCase()}`);
+    }
     return (
         <>
             <div className={`bg-black fixed w-full z-10 transition-all duration-300 ${isScrolled ? 'bg-black' : 'bg-transparent'}`}>
                 <nav className="px-5 text-white flex justify-between items-center w-full py-3">
                     {/* Left Section */}
                     <div className="flex items-center">
-                        <img src={logo} alt="Netflix" className="w-24 mr-6 cursor-pointer" />
+                        <Link to="/home">
+                        <img src={logo} alt="Netflix" className="w-24 mr-6 cursor-pointer" /></Link>
                         <ul className="hidden md:flex space-x-5">
                             <li className="cursor-pointer hover:text-gray-300"><Link to="/addmovie">Add Movies</Link></li>
                             <li className="cursor-pointer hover:text-gray-300"><Link to="/allmovie">All Movies</Link></li>
@@ -59,13 +62,28 @@ const Navbar: React.FC = () => {
                                 {dropdownOpen && (
                                     <ul className="absolute bg-black text-white shadow-lg rounded-md py-2 mt-2 w-40">
                                         <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer">
-                                            <Link to="/category/action">Action</Link>
+                                        <button onClick={() => handleCategoryClick('Action')} >Action</button>
                                         </li>
                                         <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer">
-                                            <Link to="/category/comedy">Comedy</Link>
+                                        <button onClick={() => handleCategoryClick('Comedy')} >Comedy</button>
                                         </li>
                                         <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer">
-                                            <Link to="/category/horror">Horror</Link>
+                                        <button onClick={() => handleCategoryClick('Horror')} >Horror</button>
+                                        </li>
+                                        <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer">
+                                        <button onClick={() => handleCategoryClick('Thrill')} >Thrill</button>
+                                        </li>
+                                        <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer">
+                                        <button onClick={() => handleCategoryClick('Monster')} >Monster</button>
+                                        </li>
+                                        <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer">
+                                        <button onClick={() => handleCategoryClick('Reality')} >Reality</button>
+                                        </li>
+                                        <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer">
+                                        <button onClick={() => handleCategoryClick('Fantasy')} >Fantasy</button>
+                                        </li>
+                                        <li className="px-4 py-2 hover:bg-gray-800 cursor-pointer">
+                                        <button onClick={() => handleCategoryClick('Animation')} >Animation</button>
                                         </li>
                                     </ul>
                                 )}

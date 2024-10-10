@@ -2,9 +2,10 @@ import React, { useState, useEffect } from 'react';
 import axios, { AxiosError } from "axios";
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import Footer from '../footer/Footer';
 import Navbar from '../Navbar/Navbar';
+import Layout from '../layout/Layout';
 
 interface ErrorResponse {
     message: string;
@@ -12,7 +13,13 @@ interface ErrorResponse {
 
 const UpdateMovie: React.FC = () => {
     const navigate = useNavigate();
-    const [movieId, setMovieId] = useState<number | string>(''); // ID to fetch movie
+    const {id} = useParams<{id:string}>();
+    useEffect(()=>{
+        if(id){
+            fetchMovieById(id)
+        }
+    },[id])
+   
     const [title, setTitle] = useState('');
     const [releaseDate, setReleaseDate] = useState('');
     const [genre, setGenre] = useState('');
@@ -21,9 +28,9 @@ const UpdateMovie: React.FC = () => {
     const [selectedFile, setSelectedFile] = useState<File | null>(null);  
 
     
-    const fetchMovieById = async (id: number | string) => {
+    const fetchMovieById = async (movieId:string) => {
         try {
-            const response = await axios.get(`http://localhost:4000/movies/find/${id}`); 
+            const response = await axios.get(`http://localhost:4000/movies/find/${movieId}`); 
             const movieData = response.data;
             setTitle(movieData.title);
             setReleaseDate(movieData.releaseDate);
@@ -56,7 +63,7 @@ const UpdateMovie: React.FC = () => {
         }
 
         try {
-            await axios.patch(`http://localhost:4000/movies/update/${movieId}`, formData, {
+            await axios.patch(`http://localhost:4000/movies/update/${id}`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                 },
@@ -70,36 +77,17 @@ const UpdateMovie: React.FC = () => {
     };
 
 
-    const handleFetchMovie = () => {
-        if (movieId) {
-            fetchMovieById(movieId);
-        } else {
-            toast.error("Please enter a valid movie ID.");
-        }
-    };
+   
 
     return (
-        <>
-            <Navbar />
+        <Layout>
+            
             <div className='UpdateMovie flex justify-center items-center flex-col'>
                 <div className='text-4xl text-white'>
                     Update Movie
                 </div>
             </div>
             <div className='px-40 my-20'>
-               
-                <input
-                    type="number"
-                    placeholder='Enter Movie ID to Fetch'
-                    className='block p-4 w-full outline-none'
-                    style={{ border: "2px solid red" }}
-                    value={movieId}
-                    onChange={(e) => setMovieId(e.target.value)}
-                />
-                <button className='block p-4 mt-4 w-full text-white' style={{ background: "red" }} onClick={handleFetchMovie}>
-                    Fetch Movie
-                </button>
-
                 <form onSubmit={handleMovieUpdate}>
                     <input
                         type="text"
@@ -155,8 +143,8 @@ const UpdateMovie: React.FC = () => {
                     </button>
                 </form>
             </div>
-            <Footer />
-        </>
+           
+        </Layout>
     );
 };
 
